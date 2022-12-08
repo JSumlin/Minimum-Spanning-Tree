@@ -1,5 +1,4 @@
 /* Joseph Sumlin
- * 002-42-4529
  * Algorithms HW5 Q2
  */
 
@@ -11,6 +10,7 @@ public class main {
 		List<Edge> chosenEdges = new ArrayList<Edge>();
 		Random rand = new Random();
 		EdgeMinHeap minHeap = new EdgeMinHeap();
+		boolean[][] spanningTree = new boolean[coord.length][coord.length];
 		
 		//generating random coordinates for each point
 		for(int i=0; i<coord.length; i++) {
@@ -25,14 +25,22 @@ public class main {
 			}
 		}
 		
+		System.out.println(minHeap);
+		
 		// finds |V|-1 edges which don't form a cycle.
 		while(chosenEdges.size()!=coord.length-1) {
 			Edge minEdge = minHeap.pop();
-			chosenEdges.add(minEdge);
-			if(isCyclic(coord, chosenEdges, minEdge.getPointA())) chosenEdges.remove(chosenEdges.size()-1);
+			spanningTree[minEdge.getPointA()][minEdge.getPointB()] = true;
+			spanningTree[minEdge.getPointB()][minEdge.getPointA()] = true;
+			if(isCyclic(spanningTree, minEdge.getPointA())) {
+				spanningTree[minEdge.getPointA()][minEdge.getPointB()] = false;
+				spanningTree[minEdge.getPointB()][minEdge.getPointA()] = false;
+			} else {
+				chosenEdges.add(minEdge);
+			}
 		}
 		
-		// tallies minimum cost
+		// tallies weight of MST
 		int minCost=0;
 		for(int i=0; i<chosenEdges.size(); i++) {
 			minCost+=chosenEdges.get(i).getDist();
@@ -41,22 +49,11 @@ public class main {
 		// output
 		System.out.println("Minimum cost: "+minCost);
 		System.out.println("Edges (Distance, Point A, Point B): "+chosenEdges);
-	}
-	
-	//Builds an adjacency matrix with the chosenEdges. This is used for isCyclic.
-	private static boolean[][] buildGraph(Integer[][] coord, List<Edge> chosenEdges) {
-		boolean[][] graph = new boolean[coord.length][coord.length];
-		for(int i=0; i<chosenEdges.size(); i++) {
-			graph[chosenEdges.get(i).getPointA()][chosenEdges.get(i).getPointB()] = true;
-			graph[chosenEdges.get(i).getPointB()][chosenEdges.get(i).getPointA()] = true;
-		}
-		return graph;
-	}
+	}	
 	
 	// Depth first search with an adjacency matrix. It determines if the graph contains a cycle.
 	// Most of this is code I wrote for HW3 Q4.
-	private static boolean isCyclic(Integer[][] coord, List<Edge> chosenEdges, int start) {
-		boolean[][] graph = buildGraph(coord, chosenEdges);
+	private static boolean isCyclic(boolean[][] graph, int start) {
 		boolean[] visited=new boolean[graph[0].length]; //tracks what nodes we've visited.
 		visited[start] = true;
 		Stack<Integer> stack=new Stack<Integer>(); //stack to retrace our steps.
